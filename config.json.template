@@ -1,0 +1,8 @@
+{
+  "pos_pvtkey": "",
+  "plasma_pvtkey": "",
+  "NULL_ADDRESS": "0x0000000000000000000000000000000000000000",
+  "ROOT_RPC": "https://goerli.infura.io/v3/<API-KEY>",
+  "MATIC_RPC": "https://rpc-mumbai.matic.today",
+  "childchain_pos": "0xb5505a6d998549090530911180f38aC5130101c6"
+}
