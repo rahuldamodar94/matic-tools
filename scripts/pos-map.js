@@ -102,24 +102,24 @@ async function displayInfo(token) {
 }
 
 async function map() {
-  const ERC20Token = {
-    root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
-    name: "TEST Token",
-    symbol: "TEST",
-    decimals: 18,
-    type: "ERC20",
-  };
+  // const ERC20Token = {
+  //   root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
+  //   name: "TEST Token",
+  //   symbol: "TEST",
+  //   decimals: 18,
+  //   type: "ERC20",
+  // };
   const ERC721Token = {
-    root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
+    root: "0x5a08d01e07714146747950CE07BB0f741445D1b8",
     name: "TEST Token",
     symbol: "TEST",
     type: "ERC721",
   };
 
-  let ERC20 = await deployERC20(ERC20Token);
-  ERC20Token["child"] = ERC20;
-  await mapOnRoot(ERC20Token);
-  await displayInfo(ERC20Token);
+  // let ERC20 = await deployERC20(ERC20Token);
+  // ERC20Token["child"] = ERC20;
+  // await mapOnRoot(ERC20Token);
+  // await displayInfo(ERC20Token);
   let ERC721 = await deployERC721(ERC721Token);
   ERC721Token["child"] = ERC721;
   await mapOnRoot(ERC721Token);
