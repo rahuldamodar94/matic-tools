@@ -33,22 +33,16 @@ async function deployERC20(token) {
   console.log("deploying ERC20");
   let ERC20 = await ERC20Contract.deploy({
     data: ERC20bytecode,
-    arguments: [token.name, token.symbol, token.decimals],
+    arguments: [
+      token.name,
+      token.symbol,
+      token.decimals,
+      childChainManagerAddress,
+    ],
   }).send({
     from: child_web3.eth.accounts.wallet[0].address,
     gas: 7000000,
   });
-
-  console.log("deployed", ERC20.options.address);
-
-  const DEPOSITOR_ROLE = await ERC20.methods.DEPOSITOR_ROLE().call();
-
-  console.log("granting depositor role to ChildChainManager ...");
-  await ERC20.methods.grantRole(DEPOSITOR_ROLE, childChainManagerAddress).send({
-    from: child_web3.eth.accounts.wallet[0].address,
-    gas: 500000,
-  });
-  console.log("granted");
 
   return ERC20.options.address;
 }
@@ -58,24 +52,11 @@ async function deployERC721(token) {
   console.log("deploying ERC721");
   let ERC721 = await ERC721Contract.deploy({
     data: ERC721bytecode,
-    arguments: [token.name, token.symbol],
+    arguments: [token.name, token.symbol, childChainManagerAddress],
   }).send({
     from: child_web3.eth.accounts.wallet[0].address,
     gas: 7000000,
   });
-
-  console.log("deployed", ERC721.options.address);
-
-  const DEPOSITOR_ROLE = await ERC721.methods.DEPOSITOR_ROLE().call();
-
-  console.log("granting depositor role to ChildChainManager ...");
-  await ERC721.methods
-    .grantRole(DEPOSITOR_ROLE, childChainManagerAddress)
-    .send({
-      from: child_web3.eth.accounts.wallet[0].address,
-      gas: 500000,
-    });
-  console.log("granted");
 
   return ERC721.options.address;
 }
@@ -101,29 +82,33 @@ async function displayInfo(token) {
   console.log("===");
 }
 
-async function map() {
-  // const ERC20Token = {
-  //   root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
-  //   name: "TEST Token",
-  //   symbol: "TEST",
-  //   decimals: 18,
-  //   type: "ERC20",
-  // };
+async function mapNFT() {
   const ERC721Token = {
-    root: "0x5a08d01e07714146747950CE07BB0f741445D1b8",
+    root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
     name: "TEST Token",
     symbol: "TEST",
     type: "ERC721",
   };
-
-  // let ERC20 = await deployERC20(ERC20Token);
-  // ERC20Token["child"] = ERC20;
-  // await mapOnRoot(ERC20Token);
-  // await displayInfo(ERC20Token);
   let ERC721 = await deployERC721(ERC721Token);
   ERC721Token["child"] = ERC721;
   await mapOnRoot(ERC721Token);
   await displayInfo(ERC721Token);
 }
 
-map();
+async function mapToken() {
+  const ERC20Token = {
+    root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
+    name: "TEST Token",
+    symbol: "TEST",
+    decimals: 18,
+    type: "ERC20",
+  };
+
+  let ERC20 = await deployERC20(ERC20Token);
+  ERC20Token["child"] = ERC20;
+  await mapOnRoot(ERC20Token);
+  await displayInfo(ERC20Token);
+}
+
+// mapToken();
+// mapNFT();

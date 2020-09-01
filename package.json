@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@maticnetwork/dagger": "^0.1.0",
+    "lodash": "^4.17.20",
     "web3": "^1.2.11"
   }
 }

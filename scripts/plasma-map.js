@@ -114,18 +114,19 @@ async function erc20() {
 async function erc721() {
   const erc721Token = {
     owner: "0xFd71Dc9721d9ddCF0480A582927c3dCd42f3064C",
-    root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
+    root: "0x9eA9df3bcc61D7018142FE84ab434Ca83FED87e3",
     name: "TEST Token",
     symbol: "TEST",
     decimals: 0,
     isNFT: true,
+    child: "0x79Eddf6e139214e221B586191f73d38ba2e68cfd",
   };
-  if ((await checkChildMap(erc721Token)) !== config.NULL_ADDRESS) {
-    console.log(await unmapTokenOnChild(erc721Token));
-  }
-  erc721Token["child"] = await deployTokenAndMapOnChild(erc721Token);
-  await mapOnRoot(erc721Token);
+  // if ((await checkChildMap(erc721Token)) !== config.NULL_ADDRESS) {
+  //   console.log(await unmapTokenOnChild(erc721Token));
+  // }
+  // erc721Token["child"] = await deployTokenAndMapOnChild(erc721Token);
+  // await mapOnRoot(erc721Token);
   console.log(await checkRootMap(erc721Token));
 }
 
-// erc721();
+erc721();
