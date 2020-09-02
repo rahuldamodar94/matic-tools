@@ -30,6 +30,17 @@ const childchain = new child_web3.eth.Contract(
   childchainAddress
 );
 
+const ChildTokenProxyBytecode = require("../artifacts/ChildTokenProxy.json").bytecode;
+const ChildTokenProxyAbi = require("../artifacts/ChildTokenProxy.json").abi;
+let ChildTokenProxyContract = new child_web3.eth.Contract(ChildTokenProxyAbi);
+const ChildERC721ProxifiedBytecode = require("../artifacts/ChildERC721Proxified.json").bytecode;
+const ChildERC721ProxifiedAbi = require("../artifacts/ChildERC721Proxified.json").abi;
+let ChildERC721ProxifiedContract = new child_web3.eth.Contract(ChildERC721ProxifiedAbi);
+const ChildERC20ProxifiedBytecode = require("../artifacts/ChildERC20Proxified.json").bytecode;
+const ChildERC20ProxifiedAbi = require("../artifacts/ChildERC20Proxified.json").abi;
+let ChildERC20ProxifiedContract = new child_web3.eth.Contract(ChildERC20ProxifiedAbi);
+
+
 async function unmapTokenOnChild(token) {
   let unmap = await childchain.methods
     .mapToken(token.root, config.NULL_ADDRESS, false)
@@ -41,25 +52,170 @@ async function unmapTokenOnChild(token) {
   return unmap;
 }
 
-async function deployTokenAndMapOnChild(token) {
-  let child = await childchain.methods
-    .addToken(
-      token.owner,
-      token.root,
-      token.name,
-      token.symbol,
-      token.decimals,
-      token.isNFT
-    )
+async function deployERC20TokenAndMapOnChild(token) {
+
+  let child = await ChildERC20ProxifiedContract.deploy({
+    data: ChildERC20ProxifiedBytecode,
+  }).send({
+    from: child_web3.eth.accounts.wallet[0].address,
+    gas: 7000000,
+  });
+
+  let proxy = await ChildTokenProxyContract.deploy({
+    data: ChildTokenProxyBytecode,
+    arguments: [
+      child._address,
+    ],
+  }).send({
+    from: child_web3.eth.accounts.wallet[0].address,
+    gas: 7000000,
+  });
+
+  await child.methods
+    .initialize(token.root, token.name, token.symbol, token.decimals)
     .send({
       from: child_web3.eth.accounts.wallet[0].address,
-      gas: 5000000,
+      gas: 500000,
     });
 
-  let childToken = child.events.OwnershipTransferred.address;
+  let childProxy = new child_web3.eth.Contract(ChildERC20ProxifiedAbi, proxy._address);
 
-  return childToken;
+  await childProxy.methods
+    .changeChildChain(config.childchain_plasma)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  await childchain.methods
+    .mapToken(token.root, proxy._address, token.isNFT)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  return proxy._address
 }
+
+async function updateERC20Implementation(token) {
+
+  let child = await ChildERC20ProxifiedContract.deploy({
+    data: ChildERC20ProxifiedBytecode,
+  }).send({
+    from: child_web3.eth.accounts.wallet[0].address,
+    gas: 7000000,
+  });
+
+  await child.methods
+    .initialize(token.root, token.name, token.symbol, token.decimals)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  let childERC20Proxy = new child_web3.eth.Contract(ChildERC20ProxifiedAbi, token.proxy);
+
+  await childERC20Proxy.methods
+    .changeChildChain(config.childchain_plasma)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  let childTokenProxy = new child_web3.eth.Contract(ChildTokenProxyAbi, token.proxy);
+
+  await childTokenProxy.methods
+    .updateImplementation(child._address)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+}
+
+
+
+async function deployERC721TokenAndMapOnChild(token) {
+
+  let child = await ChildERC721ProxifiedContract.deploy({
+    data: ChildERC721ProxifiedBytecode,
+  }).send({
+    from: child_web3.eth.accounts.wallet[0].address,
+    gas: 7000000,
+  });
+
+  let proxy = await ChildTokenProxyContract.deploy({
+    data: ChildTokenProxyBytecode,
+    arguments: [
+      child._address,
+    ],
+  }).send({
+    from: child_web3.eth.accounts.wallet[0].address,
+    gas: 7000000,
+  });
+
+  await child.methods
+    .initialize(token.root, token.name, token.symbol)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  let childProxy = new child_web3.eth.Contract(ChildERC721ProxifiedAbi, proxy._address);
+
+  await childProxy.methods
+    .changeChildChain(config.childchain_plasma)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  await childchain.methods
+    .mapToken(token.root, proxy._address, token.isNFT)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  return proxy._address;
+}
+
+async function updateERC721Implementation(token) {
+
+  let child = await ChildERC721ProxifiedContract.deploy({
+    data: ChildERC721ProxifiedBytecode,
+  }).send({
+    from: child_web3.eth.accounts.wallet[0].address,
+    gas: 7000000,
+  });
+
+  await child.methods
+    .initialize(token.root, token.name, token.symbol)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  let childERC721Proxy = new child_web3.eth.Contract(ChildERC721ProxifiedAbi, token.proxy);
+
+  await childERC721Proxy.methods
+    .changeChildChain(config.childchain_plasma)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  let childTokenProxy = new child_web3.eth.Contract(ChildTokenProxyAbi, token.proxy);
+
+  await childTokenProxy.methods
+    .updateImplementation(child._address)
+    .send({
+      from: child_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+}
+
 
 async function checkRootMap(token) {
   let current_child = await registry.methods
@@ -81,31 +237,36 @@ async function checkChildMap(token) {
 
 async function mapOnRoot(token) {
   let encodeMapping = await registry.methods
-    .mapToken(token.root, token.child, token.isNFT)
+    .mapToken(token.root, token.proxy, token.isNFT)
     .encodeABI();
-  let mapped = await governance.methods
+  await governance.methods
     .update(registryAddress, encodeMapping)
     .send({
       from: root_web3.eth.accounts.wallet[0].address,
       gas: 5000000,
     });
-  console.log(mapped);
 }
 
 async function erc20() {
+
   const erc20Token = {
-    owner: "0xFd71Dc9721d9ddCF0480A582927c3dCd42f3064C",
     root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
     name: "TEST Token",
     symbol: "TEST",
     decimals: 18,
-    isNFT: false,
+    isNft: false
   };
-  if ((await checkChildMap(erc20Token)) !== config.NULL_ADDRESS) {
-    console.log(await unmapERC20OnChild(erc20Token));
+
+  let child = await checkChildMap(erc20Token);
+  if ((child) !== config.NULL_ADDRESS) {
+    erc20Token["proxy"] = child
+    await updateERC20Implementation(erc20Token);
+  } else {
+    erc20Token["proxy"] = await deployERC20TokenAndMapOnChild(erc20Token);
+    await mapOnRoot(erc20Token);
   }
-  erc20Token["child"] = await deployERC20AndMapOnChild(erc20Token);
-  await mapOnRoot(erc20Token);
+
+  console.log(await checkChildMap(erc20Token));
   console.log(await checkRootMap(erc20Token));
 }
 
@@ -113,20 +274,23 @@ async function erc20() {
 
 async function erc721() {
   const erc721Token = {
-    owner: "0xFd71Dc9721d9ddCF0480A582927c3dCd42f3064C",
-    root: "0x9eA9df3bcc61D7018142FE84ab434Ca83FED87e3",
+    root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
     name: "TEST Token",
     symbol: "TEST",
-    decimals: 0,
-    isNFT: true,
-    child: "0x79Eddf6e139214e221B586191f73d38ba2e68cfd",
+    isNft: true
   };
-  // if ((await checkChildMap(erc721Token)) !== config.NULL_ADDRESS) {
-  //   console.log(await unmapTokenOnChild(erc721Token));
-  // }
-  // erc721Token["child"] = await deployTokenAndMapOnChild(erc721Token);
-  // await mapOnRoot(erc721Token);
+
+  let child = await checkChildMap(erc721Token);
+  if ((child) !== config.NULL_ADDRESS) {
+    erc721Token["proxy"] = child
+    await updateERC721Implementation(erc721Token);
+  } else {
+    erc721Token["proxy"] = await deployERC721TokenAndMapOnChild(erc721Token);
+    await mapOnRoot(erc721Token);
+  }
+
+  console.log(await checkChildMap(erc721Token));
   console.log(await checkRootMap(erc721Token));
 }
 
-erc721();
+// erc721();
