@@ -40,18 +40,6 @@ const ChildERC20ProxifiedBytecode = require("../artifacts/ChildERC20Proxified.js
 const ChildERC20ProxifiedAbi = require("../artifacts/ChildERC20Proxified.json").abi;
 let ChildERC20ProxifiedContract = new child_web3.eth.Contract(ChildERC20ProxifiedAbi);
 
-
-async function unmapTokenOnChild(token) {
-  let unmap = await childchain.methods
-    .mapToken(token.root, config.NULL_ADDRESS, false)
-    .send({
-      from: child_web3.eth.accounts.wallet[0].address,
-      gas: 5000000,
-    });
-
-  return unmap;
-}
-
 async function deployERC20TokenAndMapOnChild(token) {
 
   let child = await ChildERC20ProxifiedContract.deploy({
