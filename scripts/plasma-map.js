@@ -94,22 +94,6 @@ async function updateERC20Implementation(token) {
     gas: 7000000,
   });
 
-  await child.methods
-    .initialize(token.root, token.name, token.symbol, token.decimals)
-    .send({
-      from: child_web3.eth.accounts.wallet[0].address,
-      gas: 500000,
-    });
-
-  let childERC20Proxy = new child_web3.eth.Contract(ChildERC20ProxifiedAbi, token.proxy);
-
-  await childERC20Proxy.methods
-    .changeChildChain(config.childchain_plasma)
-    .send({
-      from: child_web3.eth.accounts.wallet[0].address,
-      gas: 500000,
-    });
-
   let childTokenProxy = new child_web3.eth.Contract(ChildTokenProxyAbi, token.proxy);
 
   await childTokenProxy.methods
@@ -176,22 +160,6 @@ async function updateERC721Implementation(token) {
     from: child_web3.eth.accounts.wallet[0].address,
     gas: 7000000,
   });
-
-  await child.methods
-    .initialize(token.root, token.name, token.symbol)
-    .send({
-      from: child_web3.eth.accounts.wallet[0].address,
-      gas: 500000,
-    });
-
-  let childERC721Proxy = new child_web3.eth.Contract(ChildERC721ProxifiedAbi, token.proxy);
-
-  await childERC721Proxy.methods
-    .changeChildChain(config.childchain_plasma)
-    .send({
-      from: child_web3.eth.accounts.wallet[0].address,
-      gas: 500000,
-    });
 
   let childTokenProxy = new child_web3.eth.Contract(ChildTokenProxyAbi, token.proxy);
 
