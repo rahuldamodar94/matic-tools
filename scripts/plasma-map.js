@@ -59,14 +59,14 @@ async function deployERC20TokenAndMapOnChild(token) {
     gas: 7000000,
   });
 
-  await child.methods
+  let childProxy = new child_web3.eth.Contract(ChildERC20ProxifiedAbi, proxy._address);
+
+  await childProxy.methods
     .initialize(token.root, token.name, token.symbol, token.decimals)
     .send({
       from: child_web3.eth.accounts.wallet[0].address,
       gas: 500000,
     });
-
-  let childProxy = new child_web3.eth.Contract(ChildERC20ProxifiedAbi, proxy._address);
 
   await childProxy.methods
     .changeChildChain(config.childchain_plasma)
@@ -126,14 +126,14 @@ async function deployERC721TokenAndMapOnChild(token) {
     gas: 7000000,
   });
 
-  await child.methods
+  let childProxy = new child_web3.eth.Contract(ChildERC721ProxifiedAbi, proxy._address);
+
+  await childProxy.methods
     .initialize(token.root, token.name, token.symbol)
     .send({
       from: child_web3.eth.accounts.wallet[0].address,
       gas: 500000,
     });
-
-  let childProxy = new child_web3.eth.Contract(ChildERC721ProxifiedAbi, proxy._address);
 
   await childProxy.methods
     .changeChildChain(config.childchain_plasma)
@@ -206,7 +206,7 @@ async function mapOnRoot(token) {
 async function erc20() {
 
   const erc20Token = {
-    root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
+    root: "0x28e9E72DbF7ADee19B5279C23E40a1b0b35C2B90",
     name: "TEST Token",
     symbol: "TEST",
     decimals: 18,
@@ -226,11 +226,11 @@ async function erc20() {
   console.log(await checkRootMap(erc20Token));
 }
 
-// erc20();
+erc20();
 
 async function erc721() {
   const erc721Token = {
-    root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
+    root: "0x28e9E72DbF7ADee19B5279C23E40a1b0b35C2B90",
     name: "TEST Token",
     symbol: "TEST",
     isNft: true
