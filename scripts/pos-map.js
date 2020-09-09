@@ -47,12 +47,12 @@ async function updateERC20(token) {
     token.child
   );
 
-  await ERC20Upgradable.methods.setImplementation(ERC20.options.address).send({
-    from: root_web3.eth.accounts.wallet[0].address,
-    gas: 500000,
-  });
-
-  return ERC20Proxy.options.address;
+  await ERC20Upgradable.methods
+    .updateImplementation(ERC20.options.address)
+    .send({
+      from: root_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
 }
 
 // deploy erc20 on child
@@ -75,7 +75,7 @@ async function deployERC20(token) {
 
   let ERC20Upgradable = await new child_web3.eth.Contract(
     ERC20Abi,
-    ERC20Proxy.option.address
+    ERC20Proxy.options.address
   );
 
   await ERC20Upgradable.methods
@@ -144,15 +144,16 @@ async function mapNFT() {
 
 async function mapToken() {
   const ERC20Token = {
-    root: "0x47195A03fC3Fc2881D084e8Dc03bD19BE8474E46",
+    root: "0xb36D11788C9c7A44635C376e530072F539153D22",
     name: "TEST Token",
     symbol: "TEST",
     decimals: 18,
     type: "ERC20",
   };
 
-  let child = await displayInfo();
-  if (!child) {
+  let child = await displayInfo(ERC20Token);
+
+  if (child == config.NULL_ADDRESS) {
     let ERC20 = await deployERC20(ERC20Token);
     ERC20Token["child"] = ERC20;
     await mapOnRoot(ERC20Token);
