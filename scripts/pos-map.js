@@ -16,8 +16,12 @@ const childChainManagerAddress = config.childchain_pos;
 const rootChainAddress = require("../artifacts/RootChainManager.json").address;
 const rootChainAbi = require("../artifacts/RootChainManager.json").abi;
 const rootchain = new root_web3.eth.Contract(rootChainAbi, rootChainAddress);
-const ERC20bytecode = require("../artifacts/POSChildERC20.json").bytecode;
-const ERC20Abi = require("../artifacts/POSChildERC20.json").abi;
+const ERC20ProxyBytecode = require("../artifacts/UChildERC20Proxy.json")
+  .bytecode;
+const ERC20ProxyAbi = require("../artifacts/UChildERC20Proxy.json").abi;
+let ERC20ProxyContract = new child_web3.eth.Contract(ERC20ProxyAbi);
+const ERC20bytecode = require("../artifacts/UChildERC20.json").bytecode;
+const ERC20Abi = require("../artifacts/UChildERC20.json").abi;
 let ERC20Contract = new child_web3.eth.Contract(ERC20Abi);
 const ERC721bytecode = require("../artifacts/POSChildERC721.json").bytecode;
 const ERC721Abi = require("../artifacts/POSChildERC721.json").abi;
@@ -28,26 +32,68 @@ const pvtKey = config.pos_pvtkey;
 child_web3.eth.accounts.wallet.add(pvtKey);
 root_web3.eth.accounts.wallet.add(pvtKey);
 
-// deploy on child
-async function deployERC20(token) {
-  console.log("deploying ERC20");
+// update erc20 on child
+async function updateERC20(token) {
+  console.log("updating ERC20");
   let ERC20 = await ERC20Contract.deploy({
     data: ERC20bytecode,
-    arguments: [
-      token.name,
-      token.symbol,
-      token.decimals,
-      childChainManagerAddress,
-    ],
   }).send({
     from: child_web3.eth.accounts.wallet[0].address,
     gas: 7000000,
   });
 
-  return ERC20.options.address;
+  let ERC20Upgradable = await new child_web3.eth.Contract(
+    ERC20ProxyAbi,
+    token.child
+  );
+
+  await ERC20Upgradable.methods.setImplementation(ERC20.options.address).send({
+    from: root_web3.eth.accounts.wallet[0].address,
+    gas: 500000,
+  });
+
+  return ERC20Proxy.options.address;
 }
 
-// deploy on child
+// deploy erc20 on child
+async function deployERC20(token) {
+  console.log("deploying ERC20");
+  let ERC20 = await ERC20Contract.deploy({
+    data: ERC20bytecode,
+  }).send({
+    from: child_web3.eth.accounts.wallet[0].address,
+    gas: 7000000,
+  });
+
+  let ERC20Proxy = await ERC20ProxyContract.deploy({
+    data: ERC20ProxyBytecode,
+    arguments: [ERC20.options.address],
+  }).send({
+    from: child_web3.eth.accounts.wallet[0].address,
+    gas: 7000000,
+  });
+
+  let ERC20Upgradable = await new child_web3.eth.Contract(
+    ERC20Abi,
+    ERC20Proxy.option.address
+  );
+
+  await ERC20Upgradable.methods
+    .initialize(
+      token.name,
+      token.symbol,
+      token.decimals,
+      childChainManagerAddress
+    )
+    .send({
+      from: root_web3.eth.accounts.wallet[0].address,
+      gas: 500000,
+    });
+
+  return ERC20Proxy.options.address;
+}
+
+// deploy erc721 on child
 async function deployERC721(token) {
   console.log("deploying ERC721");
   let ERC721 = await ERC721Contract.deploy({
@@ -80,6 +126,7 @@ async function displayInfo(token) {
   let child = await rootchain.methods.rootToChildToken(token.root).call();
   console.log("root token:", token.root, ";child token:", child);
   console.log("===");
+  return child;
 }
 
 async function mapNFT() {
@@ -97,18 +144,24 @@ async function mapNFT() {
 
 async function mapToken() {
   const ERC20Token = {
-    root: "0x776dFAfFC876b0f67b78C4776d93b55BE975a549",
+    root: "0x47195A03fC3Fc2881D084e8Dc03bD19BE8474E46",
     name: "TEST Token",
     symbol: "TEST",
     decimals: 18,
     type: "ERC20",
   };
 
-  let ERC20 = await deployERC20(ERC20Token);
-  ERC20Token["child"] = ERC20;
-  await mapOnRoot(ERC20Token);
+  let child = await displayInfo();
+  if (!child) {
+    let ERC20 = await deployERC20(ERC20Token);
+    ERC20Token["child"] = ERC20;
+    await mapOnRoot(ERC20Token);
+  } else {
+    ERC20Token["child"] = child;
+    await updateERC20(ERC20Token);
+  }
   await displayInfo(ERC20Token);
 }
 
-// mapToken();
+mapToken();
 // mapNFT();

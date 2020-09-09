@@ -80,8 +80,8 @@ async function checkDepositStatus(userAccount, rootToken, depositAmount) {
 
 checkDepositStatus(
   "0xFd71Dc9721d9ddCF0480A582927c3dCd42f3064C",
-  "0x655F2166b0709cd575202630952D71E2bB0d61Af",
-  "10000000000000000000"
+  "0x47195A03fC3Fc2881D084e8Dc03bD19BE8474E46",
+  "1000000000000000000"
 )
   .then((res) => {
     console.log(res);
