@@ -76,14 +76,6 @@ async function checkDepositStatus(userAccount, rootToken, depositAmount) {
               depositData
             );
             console.log("amount", amount);
-
-            if (
-              userAddress.toLowerCase() === userAccount.toLowerCase() &&
-              rootToken.toLowerCase() === rootTokenAddress.toLowerCase() &&
-              depositAmount === amount
-            ) {
-              resolve(true);
-            }
           }
         }
       });
