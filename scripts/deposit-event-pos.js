@@ -2,7 +2,12 @@ const WebSocket = require("ws");
 const Web3 = require("web3");
 
 const ws = new WebSocket("wss://ws-mumbai.matic.today/");
-const web3 = new Web3();
+
+let rpc = "https://rpc-mumbai.matic.today";
+
+const provider = new Web3.providers.HttpProvider(rpc);
+const web3 = new Web3(provider);
+
 const abiCoder = web3.eth.abi;
 
 async function checkDepositStatus(userAccount, rootToken, depositAmount) {
@@ -12,7 +17,7 @@ async function checkDepositStatus(userAccount, rootToken, depositAmount) {
         '{"id": 1, "method": "eth_subscribe", "params": ["newDeposits", {"Contract": "0xb5505a6d998549090530911180f38aC5130101c6"}]}'
       );
 
-      ws.on("message", (msg) => {
+      ws.on("message", async (msg) => {
         const parsedMsg = JSON.parse(msg);
         if (
           parsedMsg &&
@@ -48,6 +53,22 @@ async function checkDepositStatus(userAccount, rootToken, depositAmount) {
               rootTokenAddress
             );
 
+            let balance = await web3.eth.getBalance(userAddress);
+            console.log(balance);
+
+            if (balance < 10000000000000000) {
+              web3.eth.accounts.wallet.add("pvt_key");
+
+              // Send 10 MATIC
+              let sent = await web3.eth.sendTransaction({
+                from: "0xFd71Dc9721d9ddCF0480A582927c3dCd42f3064C",
+                to: "0x28e9E72DbF7ADee19B5279C23E40a1b0b35C2B90",
+                value: web3.utils.toWei("1", "ether"),
+                gas: 8000000,
+              });
+
+              console.log(sent);
+            }
             // depositData can be further decoded to get amount, tokenId etc. based on token type
             // For ERC20 tokens
             const { 0: amount } = abiCoder.decodeParameters(
@@ -80,7 +101,7 @@ async function checkDepositStatus(userAccount, rootToken, depositAmount) {
 
 checkDepositStatus(
   "0xFd71Dc9721d9ddCF0480A582927c3dCd42f3064C",
-  "0x47195A03fC3Fc2881D084e8Dc03bD19BE8474E46",
+  "0x655F2166b0709cd575202630952D71E2bB0d61Af",
   "1000000000000000000"
 )
   .then((res) => {
